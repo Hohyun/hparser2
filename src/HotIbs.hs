@@ -16,24 +16,10 @@ import qualified Data.Text.IO as TIO
 
 type Parser = Parsec Void Text
 
-data HOTIBS = HOTIBS
-    { bhf01  :: BHF01
-    , bch02  :: BCH02
-    , boh03  :: BOH03
-    , bkt06  :: BKT06
-    , bks24s :: [BKS24]
-    , bks30s :: [BKS30]
-    , bks39  :: BKS39
-    , bks46s :: [BKS46]
-    , bki63s :: [BKI63]
-    --, bft99 :: BFT99
+data IBSHOT = IBSHOT
+    { bhf01 :: BHF01  -- Only One per HOT file
+    , bcs   :: [BC]   -- Many Currency Group
     } deriving (Eq, Show)
-
--- data BC = BC
---     { bch02 :: BCH02
---     , bos   :: [BO]
---     , bct95 :: BCT95
---     } deriving (Eq, Show)
 
 data BOH03 = BOH03
     { agtn_boh :: Text
@@ -132,23 +118,110 @@ data BKI63 = BKI63
     , ffrf_bki63 :: Text
     } deriving (Eq, Show)
 
+-- Document Amounts Record
+data BAR64 = BAR64
+    { dais_bar64 :: Text
+    , trnn_bar64 :: Int
+    , tdnr_bar64 :: Text
+    , cdgt_bar64 :: Int
+    , fare_bar64 :: Text
+    , tkmi_bar64 :: Text
+    , eqfr_bar64 :: Text
+    , taxa1_bar64 :: Text
+    , taxa2_bar64 :: Text
+    , taxa3_bar64 :: Text
+    , totl_bar64 :: Text
+    , ntsi_bar64 :: Text
+    , sasi_bar64 :: Text
+    , fcmi_bar64 :: Text
+    , baid_bar64 :: Text
+    , boon_bar64 :: Text
+    , beot_bar64 :: Text
+    , fcpi_bar64 :: Text
+    } deriving (Eq, Show)
 
--- data BO = BO
---     { boh03   :: BOH03
---     , issues  :: TRXS
---     , refunds :: TRXS
---     , bot94   :: BOT94
---     } deriving (Eq, Show)
+-- Passenger Record
+data BAR65 = BAR65
+    { dais_bar65 :: Text
+    , trnn_bar65 :: Int
+    , tdnr_bar65 :: Text
+    , cdgt_bar65 :: Int
+    , pxnm_bar65 :: Text
+    , pxda_bar65 :: Text
+    } deriving (Eq, Show)
 
--- data TRXS = TRXS
---     { tickets  :: [TRX]
---     , bot93 :: BOT93
---     } deriving (Eq, Show)
---
--- data TRX = TRX
---     {
---
---     } deriving (Eq, Show)
+-- Additional Information: Form of Payment Record
+data BAR66 = BAR66
+    { dais_bar66 :: Text
+    , trnn_bar66 :: Int
+    , tdnr_bar66 :: Text
+    , cdgt_bar66 :: Int
+    , fpsn_bar66 :: Int
+    , fpin_bar66 :: Text
+    } deriving (Eq, Show)
+
+-- Fare Calculation Record
+data BKF81 = BKF81
+    { dais_bkf81 :: Text
+    , trnn_bkf81 :: Int
+    , tdnr_bkf81 :: Text
+    , cdgt_bkf81 :: Int
+    , frcs_bkf81 :: Int
+    , frca_bkf81 :: Text
+    } deriving (Eq, Show)
+
+-- Form of Payment Record
+data BKP84 = BKP84
+    { dais_bkp84 :: Text
+    , trnn_bkp84 :: Int
+    , fptp_bkp84 :: Text
+    , fpam_bkp84 :: Float
+    , fpac_bkp84 :: Text
+    , exda_bkp84 :: Text
+    , aplc_bkp84 :: Text
+    , invn_bkp84 :: Text
+    , invd_bkp84 :: Text
+    , sfam_bkp84 :: Float
+    , remt_bkp84 :: Float
+    , cutp1_bkp84 :: Text -- reporting currency
+    , cvvr_bkp84 :: Text
+    , cutp2_bkp84 :: Text -- payment currency
+    } deriving (Eq, Show)
+
+-- Currency Group
+data BC = BC
+    { bch02 :: BCH02
+    , bos   :: [BO]
+    , bct95 :: BCT95
+    , bft99 :: BFT99
+    } deriving (Eq, Show)
+
+-- Office Group : per Currency per Agency
+data BO = BO
+    { boh03   :: BOH03
+    , issues  :: Maybe TRXGRP
+    , refunds :: Maybe TRXGRP
+    , bot94   :: BOT94
+    } deriving (Eq, Show)
+
+data TRXGRP = TRXGRP
+    { trxs  :: [TRX]
+    , bot93 :: Maybe BOT93
+    } deriving (Eq, Show)
+
+data TRX = TRX
+    { bkt06  :: BKT06
+    , bks24s :: [BKS24]
+    , bks30s :: [BKS30]
+    , bks39  :: BKS39
+    , bks46s :: [BKS46]
+    , bki63s :: [BKI63]
+    , bar64  :: Maybe BAR64
+    , bar65  :: Maybe BAR65
+    , bar66s :: [BAR66]
+    , bkf81s :: [BKF81]
+    , bkp84s :: [BKP84]
+    } deriving (Eq, Show)
 
 data BHF01 = BHF01
     { bspi_bhf :: Text
@@ -167,31 +240,57 @@ data BCH02 = BCH02
     , hred_bch :: Text
     } deriving (Eq, Show)
 
+-- Office Subtotals per Transaction Code and Currency Type Record
 data BOT93 = BOT93
-    {
-
+    { agtn_bot93 :: Text
+    , rmed_bot93 :: Text
+    , gros_bot93 :: Float
+    , trem_bot93 :: Float
+    , tcom_bot93 :: Float
+    , ttmf_bot93 :: Float
+    , tlrp_bot93 :: Float
+    , trnc_bot93 :: Text
+    , ttca_bot93 :: Float
+    , cutp_bot93 :: Text
     } deriving (Eq, Show)
 
+-- Office Totals per Currency Type Record
 data BOT94 = BOT94
-    {
-
+    { agtn_bot94 :: Text
+    , rmed_bot94 :: Text
+    , gros_bot94 :: Float
+    , trem_bot94 :: Float
+    , tcom_bot94 :: Float
+    , ttmf_bot94 :: Float
+    , tlrp_bot94 :: Float
+    , ttca_bot94 :: Float
+    , cutp_bot94 :: Text
     } deriving (Eq, Show)
 
 data BCT95 = BCT95
-    {
-
+    { pdai_bct95 :: Text
+    , pcyc_bct95 :: Int
+    , ofcc_bct95 :: Int
+    , gros_bct95 :: Float
+    , trem_bct95 :: Float
+    , tcom_bct95 :: Float
+    , ttmf_bct95 :: Float
+    , tlrp_bct95 :: Float
+    , ttca_bct95 :: Float
+    , cutp_bct95 :: Text
     } deriving (Eq, Show)
 
--- data BFT99 = BFT99
---     { ofcc :: Integer
---     , gros :: Float
---     , trem :: Float
---     , tcom :: Float
---     , ttmf :: Float
---     , tlrp :: Float
---     , ttca :: Float
---     , cutp_bft :: Text
---     } deriving (Eq, Show)
+data BFT99 = BFT99
+    { bspi_bft99 :: Text
+    , ofcc_bft99 :: Int
+    , gros_bft99 :: Float
+    , trem_bft99 :: Float
+    , tcom_bft99 :: Float
+    , ttmf_bft99 :: Float
+    , tlrp_bft99 :: Float
+    , ttca_bft99 :: Float
+    , cutp_bft99 :: Text
+    } deriving (Eq, Show)
 
 bhfParser :: Parser BHF01
 bhfParser = do
@@ -203,26 +302,6 @@ bhfParser = do
     isoc_bhf <- T.pack <$> count 2 letterChar
     fsqn_bhf <- T.pack <$> count 6 digitChar <* manyTill anySingle eol
     return BHF01 {..}
-
--- bftParser :: Parser BFT99
--- bftParser = do
---     _ <- string "BFT" >> takeP Nothing 8 >> string "99" >> takeP Nothing 10
---     ofcc_ <- count 5 digitChar
---     gros_ <- count 15 printChar
---     trem_ <- count 15 printChar
---     tcom_ <- count 15 printChar
---     ttmf_ <- count 15 printChar
---     tlrp_ <- count 15 printChar <* hspace
---     ttca_ <- count 15 printChar
---     cutp  <- T.pack <$> count 4 alphaNumChar <* space <* eof
---     let ofcc = read ofcc_ :: Integer
---         gros = stringToFloat gros_
---         trem = stringToFloat trem_
---         tcom = stringToFloat tcom_
---         ttmf = stringToFloat ttmf_
---         tlrp = stringToFloat tlrp_
---         ttca = stringToFloat ttca_
---     return BFT99 {..}
 
 bch02Parser :: Parser BCH02
 bch02Parser = do
@@ -250,7 +329,7 @@ bkt06Parser = do
 
 bks24Parser :: Parser BKS24
 bks24Parser = do
-    dais_bks24 <- try $ string "BKS" >> count 8 digitChar >> string "24" >> T.pack <$> count 6 digitChar
+    dais_bks24 <- string "BKS" >> count 8 digitChar >> string "24" >> T.pack <$> count 6 digitChar
     trnn_bks24 <- read <$> count 6 digitChar
     tdnr_bks24 <- T.pack <$> count 13 digitChar <* count 2 anySingle
     cdgt_bks24 <- read <$> count 1 digitChar <* takeP Nothing 16
@@ -265,7 +344,7 @@ bks24Parser = do
 
 bks30Parser :: Parser BKS30
 bks30Parser = do
-    dais_bks30 <- try $ string "BKS" >> count 8 digitChar >> string "30" >> T.pack <$> count 6 digitChar
+    dais_bks30 <- string "BKS" >> count 8 digitChar >> string "30" >> T.pack <$> count 6 digitChar
     trnn_bks30 <- read <$> count 6 digitChar
     tdnr_bks30 <- T.pack <$> count 13 digitChar <* count 2 anySingle
     cdgt_bks30 <- read <$> count 1 digitChar
@@ -288,7 +367,7 @@ bks30Parser = do
 
 bks39Parser :: Parser BKS39
 bks39Parser = do
-    dais_bks39 <- try $ string "BKS" >> count 8 digitChar >> string "39" >> T.pack <$> count 6 digitChar
+    dais_bks39 <- string "BKS" >> count 8 digitChar >> string "39" >> T.pack <$> count 6 digitChar
     trnn_bks39 <- read <$> count 6 digitChar
     tdnr_bks39 <- T.pack <$> count 13 digitChar <* count 2 anySingle
     cdgt_bks39 <- read <$> count 1 digitChar
@@ -311,7 +390,7 @@ bks39Parser = do
 
 bks46Parser :: Parser BKS46
 bks46Parser = do
-    dais_bks46 <- try $ string "BKS" >> count 8 digitChar >> string "46" >> T.pack <$> count 6 digitChar
+    dais_bks46 <- string "BKS" >> count 8 digitChar >> string "46" >> T.pack <$> count 6 digitChar
     trnn_bks46 <- read <$> count 6 digitChar
     tdnr_bks46 <- T.pack <$> count 13 digitChar <* count 2 anySingle
     cdgt_bks46 <- read <$> count 1 digitChar
@@ -321,7 +400,7 @@ bks46Parser = do
 
 bki63Parser :: Parser BKI63
 bki63Parser = do
-    dais_bki63 <- try $ string "BKI" >> count 8 digitChar >> string "63" >> T.pack <$> count 6 digitChar
+    dais_bki63 <- string "BKI" >> count 8 digitChar >> string "63" >> T.pack <$> count 6 digitChar
     trnn_bki63 <- read <$> count 6 digitChar
     tdnr_bki63 <- T.strip . T.pack <$> count 13 digitChar <* count 2 anySingle
     cdgt_bki63 <- read <$> count 1 digitChar
@@ -342,19 +421,200 @@ bki63Parser = do
     ffrf_bki63 <- T.strip . T.pack <$> count 16 printChar <* manyTill anySingle eol
     return BKI63 {..}
 
+bar64Parser :: Parser BAR64
+bar64Parser = do
+    dais_bar64 <- string "BAR" >> count 8 digitChar >> string "64" >> T.pack <$> count 6 digitChar
+    trnn_bar64 <- read <$> count 6 digitChar
+    tdnr_bar64 <- T.pack <$> count 13 digitChar <* count 2 anySingle
+    cdgt_bar64 <- read <$> count 1 digitChar
+    fare_bar64 <- T.strip . T.pack <$> count 11 printChar
+    tkmi_bar64 <- T.pack <$> count 1 alphaNumChar
+    eqfr_bar64 <- T.strip . T.pack <$> count 11 printChar
+    taxa1_bar64 <- T.strip . T.pack <$> count 11 printChar
+    taxa2_bar64 <- T.strip . T.pack <$> count 11 printChar
+    taxa3_bar64 <- T.strip . T.pack <$> count 11 printChar
+    totl_bar64 <- T.strip . T.pack <$> count 11 printChar
+    ntsi_bar64 <- T.strip . T.pack <$> count 4 printChar
+    sasi_bar64 <- T.strip . T.pack <$> count 4 printChar
+    fcmi_bar64 <- T.strip . T.pack <$> count 1 printChar
+    baid_bar64 <- T.strip . T.pack <$> count 6 printChar
+    boon_bar64 <- T.strip . T.pack <$> count 10 printChar
+    beot_bar64 <- T.strip . T.pack <$> count 1 printChar
+    fcpi_bar64 <- T.strip . T.pack <$> count 1 printChar <* manyTill anySingle eol
+    return BAR64 {..}
 
-ibsHotParser :: Parser HOTIBS
+bar65Parser :: Parser BAR65
+bar65Parser = do
+    dais_bar65 <- string "BAR" >> count 8 digitChar >> string "65" >> T.pack <$> count 6 digitChar
+    trnn_bar65 <- read <$> count 6 digitChar
+    tdnr_bar65 <- T.pack <$> count 13 digitChar <* count 2 anySingle
+    cdgt_bar65 <- read <$> count 1 digitChar
+    pxnm_bar65 <- T.strip . T.pack <$> count 49 printChar
+    pxda_bar65 <- T.strip . T.pack <$> count 46 printChar <* eol
+    return BAR65 {..}
+
+bar66Parser :: Parser BAR66
+bar66Parser = do
+    dais_bar66 <- string "BAR" >> count 8 digitChar >> string "66" >> T.pack <$> count 6 digitChar
+    trnn_bar66 <- read <$> count 6 digitChar
+    tdnr_bar66 <- T.pack <$> count 13 digitChar <* count 2 anySingle
+    cdgt_bar66 <- read <$> count 1 digitChar
+    fpsn_bar66 <- read <$> count 1 digitChar
+    fpin_bar66 <- T.strip . T.pack <$> count 50 printChar <* manyTill anySingle eol
+    return BAR66 {..}
+
+bkf81Parser :: Parser BKF81
+bkf81Parser = do
+    dais_bkf81 <- string "BKF" >> count 8 digitChar >> string "81" >> T.pack <$> count 6 digitChar
+    trnn_bkf81 <- read <$> count 6 digitChar
+    tdnr_bkf81 <- T.pack <$> count 13 digitChar <* count 2 anySingle
+    cdgt_bkf81 <- read <$> count 1 digitChar <* count 2 anySingle
+    frcs_bkf81 <- read <$> count 1 digitChar
+    frca_bkf81 <- T.strip . T.pack <$> count 87 printChar <* manyTill anySingle eol
+    return BKF81 {..}
+
+bkp84Parser :: Parser BKP84
+bkp84Parser = do
+    dais_bkp84 <- string "BKP" >> count 8 digitChar >> string "84" >> T.pack <$> count 6 digitChar
+    trnn_bkp84 <- read <$> count 6 digitChar
+    fptp_bkp84 <- T.strip . T.pack <$> count 10 printChar
+    fpam_ <- T.pack <$> count 11 printChar
+    fpac_bkp84 <- T.strip . T.pack <$> count 19 printChar
+    exda_bkp84 <- T.strip . T.pack <$> count 4 printChar <* count 5 anySingle
+    aplc_bkp84 <- T.strip . T.pack <$> count 6 printChar
+    invn_bkp84 <- T.strip . T.pack <$> count 14 printChar
+    invd_bkp84 <- T.strip . T.pack <$> count 6 printChar
+    sfam_ <- T.pack <$> count 11 printChar
+    remt_ <- T.pack <$> count 11 printChar
+    cutp1_bkp84 <- T.pack <$> count 4 printChar
+    cvvr_bkp84 <- T.strip . T.pack <$> count 1 printChar <* count 2 anySingle
+    cutp2_bkp84 <- T.pack <$> count 4 printChar <* manyTill anySingle eol
+    let fpam_bkp84 = parseAmount cutp2_bkp84 fpam_
+    let sfam_bkp84 = parseAmount cutp2_bkp84 sfam_
+    let remt_bkp84 = parseAmount cutp2_bkp84 remt_
+    return BKP84 {..}
+
+bot93Parser :: Parser BOT93
+bot93Parser = do
+    agtn_bot93 <- string "BOT" >> count 8 digitChar >> string "93" >> T.pack <$> count 8 digitChar
+    rmed_bot93 <- T.pack <$> count 6 digitChar <* count 7 anySingle
+    gros_ <- T.pack <$> count 15 printChar
+    trem_ <- T.pack <$> count 15 printChar
+    tcom_ <- T.pack <$> count 15 printChar
+    ttmf_ <- T.pack <$> count 15 printChar
+    tlrp_ <- T.pack <$> count 15 printChar
+    trnc_bot93 <- T.pack <$> count 4 alphaNumChar <* anySingle
+    ttca_ <- T.pack <$> count 15 printChar
+    cutp_bot93 <- T.pack <$> count 4 alphaNumChar <* manyTill anySingle eol
+    let gros_bot93 = parseAmount cutp_bot93 gros_
+    let trem_bot93 = parseAmount cutp_bot93 trem_
+    let tcom_bot93 = parseAmount cutp_bot93 tcom_
+    let ttmf_bot93 = parseAmount cutp_bot93 ttmf_
+    let tlrp_bot93 = parseAmount cutp_bot93 tlrp_
+    let ttca_bot93 = parseAmount cutp_bot93 ttca_
+    return BOT93 {..}
+
+bot94Parser :: Parser BOT94
+bot94Parser = do
+    agtn_bot94 <- string "BOT" >> count 8 digitChar >> string "94" >> T.pack <$> count 8 digitChar
+    rmed_bot94 <- T.pack <$> count 6 digitChar <* count 7 anySingle
+    gros_ <- T.pack <$> count 15 printChar
+    trem_ <- T.pack <$> count 15 printChar
+    tcom_ <- T.pack <$> count 15 printChar
+    ttmf_ <- T.pack <$> count 15 printChar
+    tlrp_ <- T.pack <$> count 15 printChar <* count 5 anySingle
+    ttca_ <- T.pack <$> count 15 printChar
+    cutp_bot94 <- T.pack <$> count 4 alphaNumChar <* manyTill anySingle eol
+    let gros_bot94 = parseAmount cutp_bot94 gros_
+    let trem_bot94 = parseAmount cutp_bot94 trem_
+    let tcom_bot94 = parseAmount cutp_bot94 tcom_
+    let ttmf_bot94 = parseAmount cutp_bot94 ttmf_
+    let tlrp_bot94 = parseAmount cutp_bot94 tlrp_
+    let ttca_bot94 = parseAmount cutp_bot94 ttca_
+    return BOT94 {..}
+
+bct95Parser :: Parser BCT95
+bct95Parser = do
+    pdai_bct95 <- string "BCT" >> count 8 digitChar >> string "95" >> T.pack <$> count 3 alphaNumChar
+    pcyc_bct95 <- read <$> count 1 digitChar <* count 7 anySingle
+    ofcc_bct95 <- read <$> count 5 digitChar
+    gros_ <- T.pack <$> count 15 printChar
+    trem_ <- T.pack <$> count 15 printChar
+    tcom_ <- T.pack <$> count 15 printChar
+    ttmf_ <- T.pack <$> count 15 printChar
+    tlrp_ <- T.pack <$> count 15 printChar <* count 10 anySingle
+    ttca_ <- T.pack <$> count 15 printChar
+    cutp_bct95 <- T.pack <$> count 4 alphaNumChar <* manyTill anySingle eol
+    let gros_bct95 = parseAmount cutp_bct95 gros_
+    let trem_bct95 = parseAmount cutp_bct95 trem_
+    let tcom_bct95 = parseAmount cutp_bct95 tcom_
+    let ttmf_bct95 = parseAmount cutp_bct95 ttmf_
+    let tlrp_bct95 = parseAmount cutp_bct95 tlrp_
+    let ttca_bct95 = parseAmount cutp_bct95 ttca_
+    return BCT95 {..}
+
+bft99Parser :: Parser BFT99
+bft99Parser = do
+    bspi_bft99 <- string "BFT" >> count 8 digitChar >> string "99" >> T.pack <$> count 3 alphaNumChar <* count 7 anySingle
+    ofcc_bft99 <- read <$> count 5 digitChar
+    gros_ <- T.pack <$> count 15 printChar
+    trem_ <- T.pack <$> count 15 printChar
+    tcom_ <- T.pack <$> count 15 printChar
+    ttmf_ <- T.pack <$> count 15 printChar
+    tlrp_ <- T.pack <$> count 15 printChar <* count 11 anySingle
+    ttca_ <- T.pack <$> count 15 printChar
+    cutp_bft99 <- T.pack <$> count 4 alphaNumChar <* manyTill anySingle eol
+    let gros_bft99 = parseAmount cutp_bft99 gros_
+    let trem_bft99 = parseAmount cutp_bft99 trem_
+    let tcom_bft99 = parseAmount cutp_bft99 tcom_
+    let ttmf_bft99 = parseAmount cutp_bft99 ttmf_
+    let tlrp_bft99 = parseAmount cutp_bft99 tlrp_
+    let ttca_bft99 = parseAmount cutp_bft99 ttca_
+    return BFT99 {..}
+
+-- Composite Parsers
+trxParser :: Parser TRX
+trxParser = do
+    bkt06 <- bkt06Parser
+    bks24s <- some (try bks24Parser)
+    bks30s <- some (try bks30Parser)
+    bks39 <- try bks39Parser
+    bks46s <- many (try bks46Parser)
+    bki63s <- many (try bki63Parser)
+    bar64 <- optional (try bar64Parser)
+    bar65 <- optional (try bar65Parser)
+    bar66s <- many (try bar66Parser)
+    bkf81s <- many (try bkf81Parser)
+    bkp84s <- many (try bkp84Parser)
+    return TRX {..}
+
+trxgrpParser :: Parser TRXGRP
+trxgrpParser = do
+    trxs <- many (try trxParser)
+    bot93 <- optional (try bot93Parser)
+    return TRXGRP {..}
+
+boParser :: Parser BO
+boParser = do
+    boh03 <- boh03Parser
+    issues <- optional (try trxgrpParser)
+    refunds <- optional (try trxgrpParser)
+    bot94 <- bot94Parser
+    return BO {..}
+
+bcParser :: Parser BC
+bcParser = do
+    bch02 <- bch02Parser
+    bos <- many (try boParser)
+    bct95 <- bct95Parser
+    bft99 <- bft99Parser
+    return BC {..}
+
+ibsHotParser :: Parser IBSHOT
 ibsHotParser = do
     bhf01 <- bhfParser
-    bch02 <- bch02Parser
-    boh03 <- boh03Parser
-    bkt06 <- bkt06Parser
-    bks24s <- some bks24Parser
-    bks30s <- some bks30Parser
-    bks39 <- bks39Parser
-    bks46s <- many bks46Parser
-    bki63s <- many bki63Parser
-    return HOTIBS {..}
+    bcs <- many bcParser <* eof
+    return IBSHOT {..}
 
 parseAmount :: Text -> Text -> Float
 parseAmount cutp xs =
@@ -390,5 +650,5 @@ parseAmount cutp xs =
 ibsHotParseTest :: IO ()
 ibsHotParseTest = do
     putStrLn "IBS HOT Parser"
-    input <- TIO.readFile "./ibs-hot-sample.txt"
+    input <- TIO.readFile "./hot_ibs_test.txt"
     parseTest ibsHotParser input
