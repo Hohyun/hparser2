@@ -28,6 +28,7 @@ dependencies:
 - optparse-applicative
 - mtl
 - megaparsec
+- pretty-simple
 
 ghc-options:
 - -Wall
